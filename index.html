@@ -102,11 +102,15 @@ body.compact-mode .add-btn{padding:4px;font-size:10px;margin-top:1px;}
 .changelog-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
 .changelog-version{font-weight:700;color:#667eea;margin-bottom:4px;}
 .changelog-date{font-size:11px;color:#888;margin-left:6px;}
-.watermark{position:fixed;inset:0;pointer-events:none;z-index:9999;display:flex;align-items:center;justify-content:center;font-size:40px;color:rgba(0,0,0,.08);transform:rotate(-30deg);user-select:none;}
+#aboutModal{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:2000;display:none;align-items:center;justify-content:center;}
+#aboutModal .input-content{max-width:340px;background:white;border-radius:12px;padding:16px;}
+#aboutModal .input-content h3{margin:0 0 10px;font-size:16px;}
+#aboutModal p{font-size:13px;line-height:1.6;color:#333;margin-bottom:10px;}
+#aboutModal a{color:#667eea;text-decoration:none;}
+#aboutModal hr{border:none;border-top:1px solid #eee;margin:10px 0;}
 </style>
 </head>
 <body>
-<div class="watermark">光子四象限 · 仅供个人使用</div>
 <div id="batchOverlay"></div>
 <div id="settingsOverlay" onclick="toggleSettings()"></div>
 <div class="header">
@@ -181,6 +185,10 @@ style="display:block;width:100%;text-align:center;padding:8px;background:#667eea
 </div>
 </div>
 <label class="setting-item" style="border-top:1px solid #eee">
+  <span style="flex:1;">ℹ️ 关于本工具</span>
+  <button class="batch-btn" style="padding:4px 10px;font-size:11px;" onclick="toggleAboutModal()">查看</button>
+</label>
+<label class="setting-item" style="border-top:1px solid #eee">
 <input type="checkbox" id="compactModeToggle" onchange="toggleSetting('compactMode')"> 紧凑模式（更多内容）
 </label>
 <label class="setting-item" style="border-top:1px solid #eee">
@@ -244,6 +252,29 @@ style="display:block;width:100%;text-align:center;padding:8px;background:#667eea
 </div>
 <button class="btn-confirm" style="margin-top:12px;" onclick="hideChangelog()">我知道了</button>
 </div>
+</div>
+<!-- 关于本工具弹窗（已按您的要求修改） -->
+<div id="aboutModal" onclick="if(event.target===this)hideAboutModal()">
+  <div class="input-content" onclick="event.stopPropagation()">
+    <h3>ℹ️ 关于 光子四象限</h3>
+    <p><strong>工具名称</strong><br>光子四象限（本地优先版）</p>
+    <hr>
+    <p><strong>作者</strong><br>
+    光子<br>
+    <a href="mailto:guangzi618@qq.com">guangzi618@qq.com</a></p>
+    <hr>
+    <p><strong>官方地址</strong><br>
+    <a href="https://guangziv.github.io/4quadrant/" target="_blank">
+       官方版本 · 获取最新版
+    </a></p>
+    <hr>
+    <p style="font-size:12px;color:#666;">
+      <strong>版权声明</strong><br>
+      © 2026 光子四象限<br>
+      仅供个人非商业使用，未经许可不得二次分发或用于商业用途。
+    </p>
+    <button class="btn-confirm" style="margin-top:12px;width:100%;" onclick="hideAboutModal()">关闭</button>
+  </div>
 </div>
 <div id="batchMovePanel">
 <div>
@@ -375,6 +406,7 @@ style="display:block;width:100%;text-align:center;padding:8px;background:#667eea
 </div>
 <script>
 const APP_VERSION='3.0';let tasks={q1:[],q2:[],q3:[],q4:[]};let activeHighlightedTask=null;let settings={enableEditMode:false,hideCompleted:true,batchMode:false,compactMode:false};const quadrantTitles={q1:'紧急重要 🔥⭐️',q2:'紧急不重要 🔥',q3:'重要不紧急 ⭐️',q4:'不紧急不重要'};const quadLabels={q1:{text:'第 1 象限',short:'Q1',color:'#00bcd4'},q2:{text:'第 2 象限',short:'Q2',color:'#4caf50'},q3:{text:'第 3 象限',short:'Q3',color:'#ffc107'},q4:{text:'第 4 象限',short:'Q4',color:'#ff9800'}};let focusMode=false,currentQuadrant=null,searchOpen=false,editingTask=null,editingQuadrant=null,taskClickLock=false;const tableConfig={filter:'all',showIndex:false,showNote:false,showQuadrant:false};
+
 function safeParse(key,fallback){try{const v=localStorage.getItem(key);if(!v)return fallback;const parsed=JSON.parse(v);if(Array.isArray(fallback)&&!Array.isArray(parsed)){localStorage.removeItem(key);return fallback;}return parsed;}catch{localStorage.removeItem(key);return fallback;}}
 function handleTaskClick_FinalFix(task,taskEl,e){if(taskClickLock)return;taskClickLock=true;setTimeout(()=>{taskClickLock=false},180);if(!taskEl||!e)return;if(e.target.closest('input[type="checkbox"]'))return;if(settings.enableEditMode){e.preventDefault();e.stopPropagation();openTaskEdit(task,taskEl.closest('.quadrant')?.dataset.quadrant);return;}if(settings.batchMode)return;e.preventDefault();e.stopPropagation();showTaskDetail(task,taskEl.closest('.quadrant')?.dataset.quadrant);}
 function toggleFocusMode(){focusMode=!focusMode;const btn=document.getElementById('focusModeBtn');const banner=document.getElementById('focusBanner');if(btn)btn.innerText=focusMode?'🎯 退出专注':'🎯 专注今日';if(banner)banner.style.display=focusMode?'block':'none';document.body.classList.toggle('focus-mode',focusMode);renderAll();}
@@ -434,17 +466,26 @@ document.getElementById('feedbackTrigger').onclick=function(e){e.preventDefault(
 function showChangelog(){const modal=document.getElementById('changelogModal');if(modal)modal.style.display='flex';}
 function hideChangelog(){const modal=document.getElementById('changelogModal');if(modal)modal.style.display='none';}
 document.getElementById('versionTrigger').onclick=showChangelog;
+function toggleAboutModal(){const modal=document.getElementById('aboutModal');if(modal)modal.style.display='flex';}
+function hideAboutModal(){const modal=document.getElementById('aboutModal');if(modal)modal.style.display='none';}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideTaskDetail();closeSearchModal();}});
 document.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('keydown',e=>{if(e.key==='F12'||(e.ctrlKey&&e.key==='U')||(e.ctrlKey&&e.shiftKey&&e.key==='I')){e.preventDefault();}});
 if(!location.href.includes('github.io')&&!location.href.startsWith('file://')){console.warn('⚠️ 当前并非官方发布渠道，请前往 GitHub 获取正版');}
+
+// ===== 更新提醒逻辑（最简单 Alert 方案）=====
+const CURRENT_VERSION = '3.0'; // 当前版本
+const LATEST_VERSION = '3.1';  // 官方最新版本（如需测试，可改为 '3.0' 观察效果）
+
+if (CURRENT_VERSION !== LATEST_VERSION) {
+  alert(
+    '✨ 发现新版本！\n' +
+    '光子四象限已更新至 ' + LATEST_VERSION + '\n' +
+    '请前往官方地址获取最新版。'
+  );
+}
+
 loadTasks();
 </script>
-<div style="text-align:center;font-size:12px;color:#888;padding:10px;">
-  官方版本 ·
-  <a href="https://github.com/你的账号/guangzi-quadrant" target="_blank">
-    获取最新版
-  </a>
-</div>
 </body>
 </html>
