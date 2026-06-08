@@ -27,7 +27,7 @@ https://guangziv.github.io/4quadrant/
 本地运行
 
 1. 将 
-"Code_20260608150448.html" 文件下载到本地。
+"index.html" 文件下载到本地。
 2. 使用浏览器（推荐 Chrome、Edge、Safari）直接双击打开该文件即可。
 
 📖 使用指南
